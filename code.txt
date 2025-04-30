@@ -1,0 +1,122 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+
+
+data = pd.read_csv('/content/python project.csv')
+
+
+
+print("Dataset Overview:")
+print(data.info())
+print("\nMissing Values:\n", data.isnull().sum())
+
+
+date_columns = ['Date']
+for col in date_columns:
+  if col in data.columns:
+     data[col] = pd.to_datetime(data[col])
+
+
+numeric_cols = data.select_dtypes(include=[np.number]).columns
+data[numeric_cols] = data[numeric_cols].fillna(data[numeric_cols].median())
+
+
+le = LabelEncoder()
+for col in data.select_dtypes(include=['object']).columns:
+  if col not in date_columns:
+     data[col] = le.fit_transform(data[col])
+
+
+
+plt.figure(figsize=(12, 8))
+sns.heatmap(data[numeric_cols].corr(), annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Feature Correlation Heatmap')
+plt.show()
+
+
+
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=data[numeric_cols[0]], y=data[numeric_cols[1]], hue=data[numeric_cols[-1]], palette='viridis')
+plt.title('Scatter Plot of Important Features')
+plt.show()
+
+
+
+fig = px.line(data, x=date_columns[0], y=numeric_cols[0], title='Trend Over Time')
+fig.show()
+
+
+
+target_col = numeric_cols[-1]
+y = data[target_col]
+X = data.drop(columns=[target_col] + date_columns)
+
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+
+model = RandomForestRegressor(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+
+
+y_pred = model.predict(X_test)
+
+
+
+print("Mean Absolute Error:", mean_absolute_error(y_test, y_pred))
+print("Mean Squared Error:", mean_squared_error(y_test, y_pred))
+print("R-squared Score:", r2_score(y_test, y_pred))
+
+
+
+importances = model.feature_importances_
+feature_names = X.columns
+sorted_indices = np.argsort(importances)[::-1]
+plt.figure(figsize=(10, 5))
+sns.barplot(x=[feature_names[i] for i in sorted_indices], y=importances[sorted_indices], palette='magma')
+plt.xticks(rotation=90)
+plt.title("Feature Importance")
+plt.show()
+
+
+
+fig = px.bar(x=[feature_names[i] for i in sorted_indices], y=importances[sorted_indices], title='Feature Importance', labels={'x': 'Features', 'y': 'Importance'}, color=importances[sorted_indices], color_continuous_scale='bluered')
+fig.show()
+
+
+
+plt.figure(figsize=(8, 5))
+sns.histplot(y, kde=True, bins=30, color='blue')
+plt.title('Distribution of Target Variable')
+plt.show()
+
+
+
+plt.figure(figsize=(10, 5))
+sns.boxplot(data[numeric_cols], palette='coolwarm')
+plt.xticks(rotation=90)
+plt.title('Box Plot of Numeric Features')
+plt.show()
+
+
+
+sns.pairplot(data[numeric_cols], diag_kind='kde', corner=True)
+plt.show()
