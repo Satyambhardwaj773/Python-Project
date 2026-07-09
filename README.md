@@ -1,4 +1,4 @@
-# 📈 Cryptocurrency Price Analysis using Python
+# 📈 Cryptocurrency Price Analysis
 
 This project presents a comprehensive analysis of historical cryptocurrency price data using Python. It explores market trends, price volatility, and statistical relationships among leading digital currencies like **Bitcoin (BTC)**, **Ethereum (ETH)**, and **Litecoin (LTC)**.
 
